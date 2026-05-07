@@ -1,0 +1,63 @@
+---
+applications:
+  # ------------------------------------------------------------
+  # Backend (Streamlit) — has a public route, but bound to XSUAA and validates JWT itself.
+  # Direct access without a valid Authorization: Bearer <JWT> header is rejected (403).
+  # The Approuter (public entry) handles SSO and forwards the JWT to this backend.
+  # ------------------------------------------------------------
+  - name: rag-chatbot-yf-backend
+    memory: 1024M
+    disk_quota: 2G
+    instances: 1
+    buildpacks:
+      - python_buildpack
+    routes:
+      # Replace the previous `apps.internal` route with a public cfapps URL.
+      # The backend itself validates the JWT, so direct access is rejected.
+      - route: rag-chatbot-yf-backend.cfapps.eu10-004.hana.ondemand.com
+    command: >
+      streamlit run app.py
+      --server.port $PORT
+      --server.address 0.0.0.0
+      --server.headless true
+    services:
+      # AI Core: 使用 Space 中已存在的 instance
+      - AI_Core
+      # HANA: Schema plan instance, 承载 GIT_DOCS / SMOKE_TEST_DOCS 等表。
+      # 名字里含空格, YAML 里必须加引号。
+      - "SAP HANA Schemas01"
+      # XSUAA: backend 自己也校验 JWT，避免公网 URL 被绕过。
+      - rag-chatbot-yf-xsuaa
+    env:
+      AICORE_RESOURCE_GROUP: default
+      PYTHONUNBUFFERED: "true"
+      # Tavily 不是 BTP service，只能走 env。切勿把密钥提交到 git。
+      # 推送后执行:
+      #   cf set-env rag-chatbot-yf-backend TAVILY_API_KEY <your_key>
+      #   cf restage rag-chatbot-yf-backend
+
+  # ------------------------------------------------------------
+  # Approuter (public entry) — XSUAA login required
+  # ------------------------------------------------------------
+  - name: rag-chatbot-yf-router
+    memory: 256M
+    disk_quota: 512M
+    instances: 1
+    path: approuter
+    buildpacks:
+      - nodejs_buildpack
+    random-route: true
+    services:
+      - rag-chatbot-yf-xsuaa
+    env:
+      # Forward all traffic to the backend's public cfapps URL.
+      # Direct access to this URL without a valid JWT is rejected by the backend
+      # itself (auth_service.py + sap-xssec), so the public route is not a backdoor.
+      destinations: >-
+        [
+          {
+            "name": "rag-chatbot-backend",
+            "url": "https://rag-chatbot-yf-backend.cfapps.eu10-004.hana.ondemand.com",
+            "forwardAuthToken": true
+          }
+        ]

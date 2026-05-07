@@ -1,0 +1,37 @@
+# Files / dirs that must NOT be uploaded to Cloud Foundry during `cf push`.
+# Keep this in sync with .gitignore, plus a few extras that .gitignore doesn't
+# have to care about (e.g. .git itself).
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python artefacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Version control
+.git/
+.gitignore
+
+# Local-only credentials (CF uses VCAP_SERVICES instead)
+.env
+.env.*
+.hanadb-config.json
+HanaDB_*.json
+*.service-key.json
+.aicore-config.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Misc
+*.log

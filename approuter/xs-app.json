@@ -1,0 +1,22 @@
+{
+  "authenticationMethod": "route",
+  "websockets": {
+    "enabled": true
+  },
+  "routes": [
+    {
+      "source": "^/_stcore/stream$",
+      "target": "/_stcore/stream",
+      "destination": "rag-chatbot-backend",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
+    },
+    {
+      "source": "^(.*)$",
+      "target": "$1",
+      "destination": "rag-chatbot-backend",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
+    }
+  ]
+}

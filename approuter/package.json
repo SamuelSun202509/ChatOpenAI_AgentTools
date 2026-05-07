@@ -1,0 +1,12 @@
+{
+  "name": "rag-chatbot-yf-approuter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application Router for rag-chatbot-yf (XSUAA protected).",
+  "scripts": {
+    "start": "node node_modules/@sap/approuter/approuter.js"
+  },
+  "dependencies": {
+    "@sap/approuter": "^18.0.0"
+  }
+}

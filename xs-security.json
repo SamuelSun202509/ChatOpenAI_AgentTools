@@ -1,0 +1,25 @@
+{
+  "xsappname": "rag-chatbot-yf",
+  "tenant-mode": "dedicated",
+  "description": "XSUAA definition for rag-chatbot-yf (step 1: login required).",
+  "oauth2-configuration": {
+    "redirect-uris": [
+      "https://rag-chatbot-yf-router-lean-impala-je.cfapps.eu10-004.hana.ondemand.com/**"
+    ]
+  },
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.Login",
+      "description": "Authenticated access to the application."
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Login",
+      "description": "Allows authenticated access (no additional authorization).",
+      "scope-references": [
+        "$XSAPPNAME.Login"
+      ]
+    }
+  ]
+}
