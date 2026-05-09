@@ -4,7 +4,7 @@
   "description": "XSUAA definition for rag-chatbot-yf (step 1: login required).",
   "oauth2-configuration": {
     "redirect-uris": [
-      "https://rag-chatbot-yf-router-lean-impala-je.cfapps.eu10-004.hana.ondemand.com/**"
+      "https://agentchat-syf.cfapps.eu10-004.hana.ondemand.com/**"
     ]
   },
   "scopes": [

@@ -87,10 +87,15 @@ from agent_service import (  # noqa: E402 — intentional post-auth import
 # ============================================================
 # Title + caption (now safe to render — user is authenticated)
 # ============================================================
+# Hardcoded author tag (the developer who built this demo, not the
+# currently signed-in user). Distinct from `_identity.user_name`, which
+# changes per session.
+_AUTHOR = "UUS1SGH"
+
 st.title("💬 Chatbot Demo")
 _who = "local dev" if _identity.is_local_dev else _identity.display_name
 st.caption(
-    f"AI Core · GPT-4o · RAG (HANA) + News Search · env={ENV} · signed in as **{_who}**"
+    f"AI Core · LangGraph agent · by {_AUTHOR} · env={ENV} · signed in as **{_who}**"
 )
 
 

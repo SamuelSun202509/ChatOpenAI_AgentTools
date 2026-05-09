@@ -283,6 +283,13 @@ cf app rag-chatbot-yf-router       # 拿 router 的公开 URL
 
 ---
 
+## 命令速查
+
+- [Cloud Foundry CLI](docs/cf-cheatsheet.md) — 部署、日志、SSH、服务管理、本项目高频组合操作
+- [Linux 命令](docs/linux-cheatsheet.md) — 容器内与 BAS 终端通用，含 Windows ↔ Linux 命令对照
+
+---
+
 ## 故障排查
 
 | 症状 | 原因 | 解决 |

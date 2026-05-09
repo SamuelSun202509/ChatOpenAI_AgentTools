@@ -46,7 +46,12 @@ applications:
     path: approuter
     buildpacks:
       - nodejs_buildpack
-    random-route: true
+    routes:
+      # Fixed hostname (was previously `random-route: true`, which produced
+      # a noisy URL like `...-lean-impala-je.cfapps...`). The hostname is
+      # also referenced in xs-security.json's oauth2-configuration.redirect-uris,
+      # so changing it here MUST be paired with a `cf update-service` for XSUAA.
+      - route: agentchat-syf.cfapps.eu10-004.hana.ondemand.com
     services:
       - rag-chatbot-yf-xsuaa
     env:
