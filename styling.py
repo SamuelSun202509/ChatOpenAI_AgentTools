@@ -190,7 +190,56 @@ BOSCH_CSS = f"""
 html, body, [class*="st-"], .stMarkdown, .stTextInput, .stRadio, .stSelectbox,
 button, input, textarea {{
   font-family: var(--font-primary) !important;
-  color: var(--color-text);
+}}
+
+/* Restore Streamlit's native "disabled" appearance.
+   Without this, disabled selectboxes / buttons would inherit our
+   solid-black `color` from the rule above and look identical to
+   enabled ones (the very bug that hid the disabled state of the
+   "Knowledge base" dropdown in News / Weather / Wikipedia modes). */
+[data-testid="stSidebar"] [aria-disabled="true"],
+[data-testid="stSidebar"] [data-baseweb="select"][aria-disabled="true"],
+[data-testid="stSidebar"] [data-baseweb="select"][aria-disabled="true"] *,
+[data-testid="stSidebar"] [disabled],
+[data-testid="stSidebar"] input:disabled,
+[data-testid="stSidebar"] button:disabled,
+[data-testid="stSidebar"] select:disabled {{
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  color: var(--color-text-muted) !important;
+}}
+
+/* Preserve icon fonts (Material Symbols / Material Icons).
+   Streamlit's built-in widgets — sidebar collapse button, dropdown arrows,
+   help "?" hints, the `st.button` icon prefix etc. — render glyphs by
+   typing the icon's *name* into a span (e.g. "keyboard_double_arrow_right")
+   and letting `font-family: 'Material Symbols ...'` map it to a glyph.
+   The aggressive `!important` rule above would otherwise replace that
+   font and the icon name would leak through as literal text. */
+.material-symbols-rounded,
+.material-symbols-outlined,
+.material-symbols-sharp,
+.material-icons,
+.material-icons-outlined,
+.material-icons-rounded,
+.material-icons-sharp,
+[class*="material-symbols"],
+[class*="material-icons"],
+[data-testid="stIconMaterial"],
+[data-testid="stIconMaterial"] *,
+[data-testid="baseButton-headerNoPadding"] *,
+[data-testid="stSidebarCollapseButton"] *,
+[data-testid="stSidebarCollapsedControl"] * {{
+  font-family: "Material Symbols Rounded", "Material Symbols Outlined",
+               "Material Symbols Sharp", "Material Icons",
+               "Material Icons Outlined", "Material Icons Rounded",
+               "Material Icons Sharp" !important;
+  font-feature-settings: "liga";
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
 }}
 
 .stApp {{
@@ -425,6 +474,48 @@ footer {{
   font-size: 14px;
   padding: calc(var(--space-unit) * 1) 0;
 }}
+
+/* ====== Sidebar acknowledgments footer ======
+   Approach: a tall empty spacer right before the credits block forces
+   visual separation from the "Clear conversation" button above, while
+   keeping the credits in normal document flow (no absolute / sticky
+   positioning, no Streamlit-DOM assumptions).
+   `min-height: 40vh` ≈ 40% of viewport — pushes the credits firmly
+   toward the bottom of the sidebar on typical screens. */
+.bosch-sidebar-credits-spacer {{
+  min-height: 40vh;
+}}
+
+.bosch-sidebar-credits {{
+  padding-top: calc(var(--space-unit) * 2);
+  padding-bottom: calc(var(--space-unit) * 1);
+  border-top: 1px solid var(--color-border);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}}
+.bosch-sidebar-credits__title {{
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin-bottom: calc(var(--space-unit) * 0.5);
+}}
+.bosch-sidebar-credits__body {{
+  color: var(--color-text-muted);
+}}
+.bosch-sidebar-credits__body code {{
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  padding: 0 4px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-family: "Consolas", "Menlo", "Courier New", monospace;
+}}
+.bosch-sidebar-credits__body strong {{
+  color: var(--color-text);
+}}
 </style>
 """
 
@@ -566,5 +657,37 @@ def render_tool_status(label: str, placeholder) -> None:
     """
     placeholder.markdown(
         f'<div class="bosch-tool-status">{label}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_sidebar_credits() -> None:
+    """Render an `Acknowledgments` footer toward the bottom of the sidebar.
+
+    Style: the conventional open-source `Acknowledgments` block — small,
+    muted, uppercase title, body in lower-contrast grey. Idiomatic in
+    README files and About panels; carries no marketing weight.
+
+    A 30vh-tall transparent spacer is emitted first so the credits are
+    visually separated from the "Clear conversation" button above,
+    landing near the bottom of the sidebar without using fragile
+    absolute / sticky positioning.
+
+    The credit notes that the visual identity is driven by the
+    `bosch-brand-style-guide` Cursor skill authored by AHE2JU.
+    Call this inside a `with st.sidebar:` block.
+    """
+    st.markdown(
+        """
+<div class="bosch-sidebar-credits-spacer"></div>
+<div class="bosch-sidebar-credits">
+  <div class="bosch-sidebar-credits__title">Acknowledgments</div>
+  <div class="bosch-sidebar-credits__body">
+    Bosch corporate-design styling is driven by the
+    <code>bosch-brand-style-guide</code> Cursor skill,
+    authored by <strong>@AHE2JU</strong>.
+  </div>
+</div>
+""",
         unsafe_allow_html=True,
     )

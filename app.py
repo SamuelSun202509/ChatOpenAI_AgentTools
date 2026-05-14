@@ -22,6 +22,7 @@ from styling import (
     inject_bosch_style,
     render_assistant_bubble,
     render_bosch_header,
+    render_sidebar_credits,
     render_sources,
     render_tool_status,
     render_unauthorized_card,
@@ -159,6 +160,8 @@ with st.sidebar:
         st.session_state.messages = []
         st.session_state.thread_seq = st.session_state.get("thread_seq", 0) + 1
         st.rerun()
+
+    render_sidebar_credits()
 
 
 # ============================================================
