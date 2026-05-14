@@ -18,12 +18,26 @@ import streamlit as st
 
 from auth_service import validate_authorization_header
 from config import ENV, apply_local_proxy
+from styling import (
+    inject_bosch_style,
+    render_assistant_bubble,
+    render_bosch_header,
+    render_sources,
+    render_tool_status,
+    render_unauthorized_card,
+    render_user_bubble,
+)
 
 
 # ============================================================
 # Page config (must be the FIRST Streamlit command)
 # ============================================================
 st.set_page_config(page_title="Chatbot Demo", layout="centered")
+
+# Inject Bosch corporate-design stylesheet + the top supergraphic ribbon.
+# Must run immediately after `set_page_config` so even the Unauthorized
+# card (rendered before any other content) already looks on-brand.
+inject_bosch_style()
 
 
 # ============================================================
@@ -46,11 +60,7 @@ def _require_auth() -> "AuthIdentity":  # noqa: F821 — forward ref for readabi
 
     identity = validate_authorization_header(auth_header)
     if identity is None:
-        st.error(
-            "🔒 Unauthorized — no valid SSO token was provided.\n\n"
-            "This page must be accessed through the company SSO entry point "
-            "(the Approuter URL). Please open it from there and sign in."
-        )
+        render_unauthorized_card()
         st.stop()
     return identity
 
@@ -85,18 +95,19 @@ from agent_service import (  # noqa: E402 — intentional post-auth import
 
 
 # ============================================================
-# Title + caption (now safe to render — user is authenticated)
+# Header — Bosch supergraphic + logo bar (now safe to render).
 # ============================================================
 # Hardcoded author tag (the developer who built this demo, not the
 # currently signed-in user). Distinct from `_identity.user_name`, which
 # changes per session.
 _AUTHOR = "UUS1SGH"
 
-st.title("💬 Chatbot Demo")
 _who = "local dev" if _identity.is_local_dev else _identity.display_name
-st.caption(
-    f"AI Core · LangGraph agent · by {_AUTHOR} · env={ENV} · signed in as **{_who}**"
+_meta_html = (
+    f"AI Core · LangGraph agent · by {_AUTHOR}<br>"
+    f"env={ENV} · signed in as <strong>{_who}</strong>"
 )
+render_bosch_header(title="Chatbot Demo", meta_html=_meta_html)
 
 
 # ============================================================
@@ -170,80 +181,18 @@ if "messages" not in st.session_state:
 
 
 # ============================================================
-# Rendering helpers
-# ============================================================
-def _safe_md(content: str) -> str:
-    """Sanitize content for Streamlit's markdown renderer.
-
-    Streamlit parses `$...$` as inline LaTeX math (KaTeX), which mangles any
-    text containing currency amounts (e.g. "a $300 fine ... a $50,000 fine"
-    gets rendered as a math span and overflows the chat bubble). Escaping
-    every `$` to `\\$` is the standard markdown way to spell a literal
-    dollar sign and keeps prices intact.
-    """
-    if not content:
-        return content
-    return content.replace("$", r"\$")
-
-
-def _render_user(content: str) -> None:
-    st.markdown(
-        f"""
-<div style="display: flex; justify-content: flex-end; margin: 8px 0;">
-    <div style="background:#DCF8C6; padding:12px 16px; border-radius:15px; max-width:75%; word-wrap:break-word;">
-        {_safe_md(content)}
-    </div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-
-def _render_assistant(content: str) -> None:
-    st.markdown(
-        f"""
-<div style="display: flex; justify-content: flex-start; margin: 8px 0;">
-    <div style="background:#F1F1F1; padding:12px 16px; border-radius:15px; max-width:75%; word-wrap:break-word;">
-        {_safe_md(content)}
-    </div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-
-def _render_sources(sources: list[dict]) -> None:
-    """Render the KB citation expander under an assistant message."""
-    if not sources:
-        return
-    with st.expander(f"📚 References ({len(sources)})", expanded=False):
-        for i, src in enumerate(sources, start=1):
-            meta = src.get("metadata") or {}
-            file_name = meta.get("file_name") or meta.get("source") or "unknown"
-            source_path = meta.get("source", "")
-            start_index = meta.get("start_index", "?")
-            preview = src.get("page_content", "")
-            st.markdown(
-                f"**[{i}] {file_name}**  \n"
-                f"<span style='color:#888;font-size:0.85em;'>"
-                f"source: {source_path} · start_index: {start_index}</span>",
-                unsafe_allow_html=True,
-            )
-            st.code(
-                preview[:1000] + ("…" if len(preview) > 1000 else ""),
-                language="markdown",
-            )
-
-
-# ============================================================
 # Render history
+#
+# All rendering helpers (`render_user_bubble`, `render_assistant_bubble`,
+# `render_sources`) live in `styling.py` so brand changes never touch
+# this file.
 # ============================================================
 for msg in st.session_state.messages:
     if msg["role"] == "user":
-        _render_user(msg["content"])
+        render_user_bubble(msg["content"])
     else:
-        _render_assistant(msg["content"])
-        _render_sources(msg.get("sources", []))
+        render_assistant_bubble(msg["content"])
+        render_sources(msg.get("sources", []))
 
 
 # ============================================================
@@ -253,7 +202,7 @@ user_input = st.chat_input("Ask me anything…")
 
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
-    _render_user(user_input)
+    render_user_bubble(user_input)
 
     status_placeholder = st.empty()
     response_placeholder = st.empty()
@@ -291,12 +240,12 @@ if user_input:
                 label = "🔍 Searching…"
             else:
                 label = f"🛠️ Running tool `{name}`…"
-            status_placeholder.markdown(f"**{label}**")
+            render_tool_status(label, status_placeholder)
             is_using_tool = True
 
         if langgraph_node == "tools" and not is_using_tool:
             is_using_tool = True
-            status_placeholder.markdown("**🛠️ Running tool…**")
+            render_tool_status("🛠️ Running tool…", status_placeholder)
 
         content = getattr(msg, "content", None)
         has_tool_calls = bool(tool_calls)
@@ -313,16 +262,7 @@ if user_input:
                 is_using_tool = False
 
             full_response += content
-            response_placeholder.markdown(
-                f"""
-<div style="display: flex; justify-content: flex-start; margin: 8px 0;">
-    <div style="background:#F1F1F1; padding:12px 16px; border-radius:15px; max-width:75%; word-wrap:break-word;">
-        {_safe_md(full_response)}
-    </div>
-</div>
-""",
-                unsafe_allow_html=True,
-            )
+            render_assistant_bubble(full_response, placeholder=response_placeholder)
 
     status_placeholder.empty()
 
@@ -341,4 +281,4 @@ if user_input:
         }
     )
 
-    _render_sources(turn_sources)
+    render_sources(turn_sources)

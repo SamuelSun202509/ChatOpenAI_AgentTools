@@ -7,5 +7,15 @@ runOnSave = false
 [browser]
 gatherUsageStats = false
 
+# Bosch corporate-design theme.
+# Detailed component styling lives in styling.py (BOSCH_CSS), which is
+# injected from app.py at runtime. These theme keys give Streamlit's
+# built-in widgets the correct base colours so the fallback (before our
+# CSS loads) is already on-brand instead of the default coral red.
 [theme]
 base = "light"
+primaryColor = "#007bc0"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f2f2f2"
+textColor = "#000000"
+font = "sans serif"
